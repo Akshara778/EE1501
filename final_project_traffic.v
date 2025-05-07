@@ -8,7 +8,9 @@ module traffic_controller(
     output reg [1:0] T1_light,
     output reg [1:0] T2_light,
     output reg Buzzer_T1,
-    output reg Buzzer_T2
+    output reg Buzzer_T2,
+    output reg T1_walk,
+    output reg T2_walk
 );
 
     parameter RED    = 2'b00;
@@ -61,7 +63,7 @@ module traffic_controller(
                         end
                     end
                     GREEN: begin
-                        if (T1_timer < 24) T1_timer <= T1_timer + 1;
+                        if (T1_timer < 29) T1_timer <= T1_timer + 1;
                         else begin
                             T1_state <= YELLOW;
                             T1_timer <= 0;
@@ -87,7 +89,7 @@ module traffic_controller(
                         end
                     end
                     GREEN: begin
-                        if (T2_timer < 24) T2_timer <= T2_timer + 1;
+                        if (T2_timer < 29) T2_timer <= T2_timer + 1;
                         else begin
                             T2_state <= YELLOW;
                             T2_timer <= 0;
@@ -111,6 +113,9 @@ module traffic_controller(
 
         Buzzer_T1 = (!pause_T1 && T1_state == RED && T1_timer >= 55);
         Buzzer_T2 = (!pause_T2 && T2_state == RED && T2_timer >= 55);
+
+        T1_walk = (T1_state == RED && !pause_T1) ? 1 : 0;
+        T2_walk = (T2_state == RED && !pause_T2) ? 1 : 0;
     end
 
 endmodule

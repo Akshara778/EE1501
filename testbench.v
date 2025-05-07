@@ -9,7 +9,7 @@ module tb_traffic_controller;
 
     wire [1:0] T1_light;
     wire [1:0] T2_light;
-    wire Buzzer_T1, Buzzer_T2;
+    wire Buzzer_T1, Buzzer_T2, T1_walk, T2_walk;
 
     traffic_controller uut (
         .clk(clk),
@@ -19,7 +19,9 @@ module tb_traffic_controller;
         .T1_light(T1_light),
         .T2_light(T2_light),
         .Buzzer_T1(Buzzer_T1),
-        .Buzzer_T2(Buzzer_T2)
+        .Buzzer_T2(Buzzer_T2),
+        .T1_walk(T1_walk),
+        .T2_walk(T2_walk)
     );
 
     // Clock generation: 1 Hz
@@ -29,7 +31,7 @@ module tb_traffic_controller;
     task print_state;
         input integer t;
         begin
-            $display("Time: %0d | T1: %s | T2: %s | Walk_1: %b | Walk_2: %b | E_L: %b | E_R: %b",
+            $display("Time: %0d | T1: %s | T2: %s | Buzzer_1: %b | Buzzer_2: %b | Walk_1: %b | Walk_2: %b | E_L: %b | E_R: %b",
                 t,
                 (T1_light == 2'b00) ? "RED   " :
                 (T1_light == 2'b01) ? "GREEN " :
@@ -39,6 +41,8 @@ module tb_traffic_controller;
                 (T2_light == 2'b10) ? "YELLOW" : "UNK   ",
                 Buzzer_T1,
                 Buzzer_T2,
+                T1_walk,
+                T2_walk,
                 Emergency_Left,
                 Emergency_Right
             );
