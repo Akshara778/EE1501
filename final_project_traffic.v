@@ -11,44 +11,47 @@ module traffic_controller(
     output reg Buzzer_T2
 );
 
-    // Light states
     parameter RED    = 2'b00;
     parameter GREEN  = 2'b01;
     parameter YELLOW = 2'b10;
 
     reg [1:0] T1_state = GREEN;
-    reg [1:0] T2_state = RED;
+    reg [1:0] T2_state = GREEN;
     reg [7:0] T1_timer = 0;
     reg [7:0] T2_timer = 0;
 
-    reg [7:0] pause_timer = 0;
-    reg fsm_paused = 0;
+    reg [15:0] current_time = 0;
+    reg [15:0] pause_until_T1 = 0;
+    reg [15:0] pause_until_T2 = 0;
+
+    wire pause_T1 = (current_time < pause_until_T1);
+    wire pause_T2 = (current_time < pause_until_T2);
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             T1_state <= GREEN;
-            T2_state <= RED;
+            T2_state <= GREEN;
             T1_timer <= 0;
             T2_timer <= 0;
-            pause_timer <= 0;
-            fsm_paused <= 0;
-        end 
-        else begin
-            // Emergency triggers
-            if ((Emergency_Right && !fsm_paused) || (Emergency_Left && !fsm_paused)) begin
-                fsm_paused <= 1;
-                pause_timer <= 0;
+            pause_until_T1 <= 0;
+            pause_until_T2 <= 0;
+            current_time <= 0;
+        end else begin
+            current_time <= current_time + 1;
+
+            if (Emergency_Left) begin
+                if (pause_until_T1 < current_time + 11)
+                    pause_until_T1 <= current_time + 11;
             end
 
-            // Pause logic
-            if (fsm_paused) begin
-                pause_timer <= pause_timer + 1;
-                if (pause_timer == 9) begin
-                    fsm_paused <= 0;
-                    pause_timer <= 0;
-                end
-            end else begin
-                // T1 FSM
+            if (Emergency_Right) begin
+                if (pause_until_T1 < current_time + 11)
+                    pause_until_T1 <= current_time + 11;
+                if (pause_until_T2 < current_time + 11)
+                    pause_until_T2 <= current_time + 11;
+            end
+
+            if (!pause_T1) begin
                 case (T1_state)
                     RED: begin
                         if (T1_timer < 59) T1_timer <= T1_timer + 1;
@@ -72,8 +75,9 @@ module traffic_controller(
                         end
                     end
                 endcase
+            end
 
-                // T2 FSM
+            if (!pause_T2) begin
                 case (T2_state)
                     RED: begin
                         if (T2_timer < 59) T2_timer <= T2_timer + 1;
@@ -102,11 +106,11 @@ module traffic_controller(
     end
 
     always @(*) begin
-        T1_light = fsm_paused ? RED : T1_state;
-        T2_light = fsm_paused ? RED : T2_state;
+        T1_light = pause_T1 ? RED : T1_state;
+        T2_light = pause_T2 ? RED : T2_state;
 
-        Buzzer_T1 = (!fsm_paused && T1_state == RED && T1_timer >= 55);
-        Buzzer_T2 = (!fsm_paused && T2_state == RED && T2_timer >= 55);
+        Buzzer_T1 = (!pause_T1 && T1_state == RED && T1_timer >= 55);
+        Buzzer_T2 = (!pause_T2 && T2_state == RED && T2_timer >= 55);
     end
 
 endmodule
